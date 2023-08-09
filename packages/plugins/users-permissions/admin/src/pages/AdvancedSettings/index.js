@@ -24,6 +24,7 @@ import {
   useNotification,
   useOverlayBlocker,
   useRBAC,
+  useFetchClient,
 } from '@strapi/helper-plugin';
 import { Check } from '@strapi/icons';
 import { Formik } from 'formik';
@@ -33,7 +34,6 @@ import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { PERMISSIONS } from '../../constants';
 import { getTrad } from '../../utils';
 
-import { fetchData, putAdvancedSettings } from './utils/api';
 import layout from './utils/layout';
 import schema from './utils/schema';
 
@@ -49,6 +49,7 @@ const AdvancedSettingsPage = () => {
   const { lockApp, unlockApp } = useOverlayBlocker();
   const { notifyStatus } = useNotifyAT();
   const queryClient = useQueryClient();
+  const { get, put } = useFetchClient();
   useFocusWhenNavigate();
 
   const {
@@ -56,26 +57,34 @@ const AdvancedSettingsPage = () => {
     allowedActions: { canUpdate },
   } = useRBAC({ update: PERMISSIONS.updateAdvancedSettings });
 
-  const { status: isLoadingData, data } = useQuery('advanced', () => fetchData(), {
-    onSuccess() {
-      notifyStatus(
-        formatMessage({
-          id: getTrad('Form.advancedSettings.data.loaded'),
-          defaultMessage: 'Advanced settings data has been loaded',
-        })
-      );
+  const { status: isLoadingData, data } = useQuery(
+    ['user-permissions', 'advanced'],
+    async () => {
+      const { data } = await get('/users-permissions/advanced');
+
+      return data;
     },
-    onError() {
-      toggleNotification({
-        type: 'warning',
-        message: { id: getTrad('notification.error'), defaultMessage: 'An error occured' },
-      });
-    },
-  });
+    {
+      onSuccess() {
+        notifyStatus(
+          formatMessage({
+            id: getTrad('Form.advancedSettings.data.loaded'),
+            defaultMessage: 'Advanced settings data has been loaded',
+          })
+        );
+      },
+      onError() {
+        toggleNotification({
+          type: 'warning',
+          message: { id: getTrad('notification.error'), defaultMessage: 'An error occured' },
+        });
+      },
+    }
+  );
 
   const isLoading = isLoadingForPermissions || isLoadingData !== 'success';
 
-  const submitMutation = useMutation((body) => putAdvancedSettings(body), {
+  const submitMutation = useMutation((body) => put('/users-permissions/advanced', body), {
     async onSuccess() {
       await queryClient.invalidateQueries('advanced');
       toggleNotification({
