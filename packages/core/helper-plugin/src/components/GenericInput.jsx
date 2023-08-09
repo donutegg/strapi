@@ -450,6 +450,10 @@ const GenericInput = ({
       );
     }
     default: {
+      /**
+       * If there's no component for the given type, we return a disabled text input
+       * showing a "Not supported" title to illustrate the issue.
+       */
       return (
         <TextInput
           disabled
