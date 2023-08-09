@@ -61,8 +61,7 @@ const RepeatableComponent = ({
     if (search.has('field')) {
       const field = search.get('field');
 
-      // eslint-disable-next-line no-unused-vars
-      let [_, path] = field.split(`${name}.`);
+      const [, path] = field.split(`${name}.`);
 
       if (get(componentValue, path, undefined) !== undefined) {
         const subpaths = path.split('.');
